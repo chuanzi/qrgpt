@@ -4,6 +4,8 @@ const Footer = () => (
   <footer>
     <div className="custom-screen pt-16">
       <div className="mt-10 py-10 border-t items-center justify-between flex">
+        {/* Removed the paragraph with author credits */}
+        {/* 
         <p className="text-gray-600">
           Created by{' '}
           <a
@@ -21,7 +23,8 @@ const Footer = () => (
           </a>
           .
         </p>
-        <div className="flex items-center gap-x-6 text-gray-400">
+        */}
+        <div className="flex items-center gap-x-6 text-gray-400 ml-auto"> {/* Added ml-auto to push remaining items to the right */}
           <a
             className="border border-slate-200 rounded-md px-3 py-1 tracking-tight flex gap-1 hover:scale-105 transition"
             href="https://v0.dev/"

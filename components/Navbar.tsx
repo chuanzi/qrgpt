@@ -9,9 +9,9 @@ import { usePathname, useSearchParams } from 'next/navigation';
 const Navbar = () => {
   const [state, setState] = useState(false);
 
-  const navigation = [
+  const navigation: { title: string; path: string; }[] = [
     // { title: 'Testimonials', path: '#testimonials' },
-    { title: 'Homepage', path: '/' },
+    // { title: 'Homepage', path: '/' },
   ];
 
   const pathname = usePathname();
@@ -42,8 +42,8 @@ const Navbar = () => {
         <div className="custom-screen items-center mx-auto md:flex">
           <div className="flex items-center justify-between py-3 md:py-5 md:block">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/box.svg" alt="logo" width={30} height={30} />
-              <div className="font-bold text-lg">QrGPT</div>
+              <Image src="/logo.svg" alt="ArtSpark Logo" width={30} height={30} />
+              <div className="font-bold text-lg">ArtSpark</div>
             </Link>
             <div className="md:hidden">
               <button
@@ -101,16 +101,16 @@ const Navbar = () => {
               })}
               <li className="duration-150 hover:text-gray-900">
                 <Link href="/gingerbread" className="block">
-                  姜饼创作
+                  Gingerbread
                 </Link>
               </li>
-              <li>
-                <NavLink
-                  href="/start"
-                  className="block font-medium text-sm text-white bg-gray-800 hover:bg-gray-600 active:bg-gray-900 md:inline"
+              <li className="duration-150 hover:text-gray-900">
+                <Link
+                  href="/qrcode"
+                  className="block"
                 >
-                  Generate your QR Code
-                </NavLink>
+                  QR Code
+                </Link>
               </li>
             </ul>
           </div>

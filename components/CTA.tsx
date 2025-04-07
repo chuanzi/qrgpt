@@ -1,35 +1,78 @@
+import NavLink from './NavLink';
+import Image from 'next/image';
+
+// Define sample images for the showcase
+const showcaseImages = [
+  { src: '/picexamples/A_happy_dancing_gingerbread_ca.png', alt: 'Happy dancing gingerbread cake' },
+  { src: '/picexamples/A_gingerbread_knight_riding_a_.png', alt: 'Gingerbread knight' },
+  { src: '/1.png', alt: 'Artistic QR Code 1' },
+  { src: '/picexamples/a_photo_of_a_GINGERBREAD_delor.png', alt: 'Decorated gingerbread photo' },
+  { src: '/6.png', alt: 'Artistic QR Code 6' },
+  { src: '/3.png', alt: 'Artistic QR Code 3' },
+];
+
 const CTA = () => (
   <SectionWrapper>
-    <div className="custom-screen">
-      <div className="max-w-2xl mx-auto text-center">
-        <h2
-          className="text-gray-800 text-3xl font-semibold sm:text-4xl"
-          id="oss"
-        >
-          QrGPT is Proudly Open Source
-        </h2>
-        <p className="mt-3 text-gray-600">
-          Our source code is available on GitHub.
-        </p>
-        <a
-          href="https://github.com/Nutlope/qrGPT"
-          className="mt-4 inline-flex justify-center items-center gap-2 font-medium text-sm text-white bg-gray-800 hover:bg-gray-600 active:bg-gray-900 max-w-[200px] py-2.5 px-4 text-center rounded-lg duration-150"
-        >
-          <svg
-            aria-hidden="true"
-            className="h-6 w-6 fill-slate-200 group-hover:fill-slate-700"
+    <div className="custom-screen pt-0 pb-16">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+          <div className="text-indigo-600 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.79 10.37a2.49 2.49 0 0 1-2.2 4.34 2.54 2.54 0 0 1-1.46-.73 3.41 3.41 0 0 0-4.26 0 2.54 2.54 0 0 1-1.46.73 2.49 2.49 0 0 1-2.2-4.34 2.48 2.48 0 0 1 1.39-1.55 2.5 2.5 0 0 1 3.82 1.1 3.52 3.52 0 0 0 4.48 0 2.5 2.5 0 0 1 3.82-1.1 2.48 2.48 0 0 1 1.39 1.55Z"/><path d="M12 15.56a1.5 1.5 0 1 0-3 0"/><path d="M15 15.56a1.5 1.5 0 1 0 3 0"/></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Gingerbread Art</h3>
+          <p className="text-gray-600 mb-4">
+            Create delightful and unique gingerbread characters and scenes with AI magic.
+          </p>
+          <NavLink
+            href="/gingerbread"
+            className="inline-block font-medium text-sm text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 py-2 px-4 rounded-lg duration-150"
           >
-            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z" />
-          </svg>
-          <span>Star on GitHub</span>
-        </a>
+            Try Gingerbread
+          </NavLink>
+        </div>
+        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+          <div className="text-teal-600 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Artistic QR Codes</h3>
+          <p className="text-gray-600 mb-4">
+            Transform standard QR codes into captivating visual art that grabs attention.
+          </p>
+          <NavLink
+            href="/qrcode"
+            className="inline-block font-medium text-sm text-white bg-teal-600 hover:bg-teal-500 active:bg-teal-700 py-2 px-4 rounded-lg duration-150"
+          >
+            Try QR Code
+          </NavLink>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto text-center mt-16">
+        <h2 className="text-gray-800 text-3xl font-semibold sm:text-4xl">
+          See What You Can Create
+        </h2>
+        <p className="mt-3 text-gray-600 mb-8">
+          Explore examples generated by ArtSpark.
+        </p>
+        <div className="grid sm:grid-cols-3 grid-cols-2 gap-4">
+          {showcaseImages.map((image, idx) => (
+            <Image
+              key={idx}
+              alt={image.alt}
+              src={image.src}
+              width={500}
+              height={500}
+              className="rounded-lg shadow-md"
+            />
+          ))}
+        </div>
       </div>
     </div>
   </SectionWrapper>
 );
 
 const SectionWrapper = ({ children, ...props }: any) => (
-  <section {...props} className={`py-16 ${props.className || ''}`}>
+  <section {...props} className={`py-0 ${props.className || ''}`}>
     {children}
   </section>
 );
