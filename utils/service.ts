@@ -38,3 +38,14 @@ export interface QrGenerateResponse {
    */
   id: string;
 }
+
+// Add types for Gingerbread generation
+export interface GingerbreadGenerateRequest {
+  prompt: string;
+}
+
+export interface GingerbreadGenerateResponse {
+  image_url: string;
+  model_latency_ms: number;
+  id: string;
+}

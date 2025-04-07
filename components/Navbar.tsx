@@ -99,6 +99,11 @@ const Navbar = () => {
                   </li>
                 );
               })}
+              <li className="duration-150 hover:text-gray-900">
+                <Link href="/gingerbread" className="block">
+                  姜饼创作
+                </Link>
+              </li>
               <li>
                 <NavLink
                   href="/start"
