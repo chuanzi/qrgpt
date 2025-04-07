@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
   }
 
   const id = nanoid();
-  const startTime = performance.now();
+  const overallStartTime = performance.now();
+  let t1: number, t2: number, t3: number, t4: number, t5: number, t6: number; // Timing points
   let imageUrl: string;
 
   try {
@@ -42,22 +43,28 @@ export async function POST(request: NextRequest) {
     va.track('Started Gingerbread Generation', {
         prompt: reqBody.prompt,
     });
-
-    // Run the Replicate model using the generic method
+    console.log(`[${id}] Starting Replicate prediction...`);
+    t1 = performance.now();
+    
+    // Run the Replicate model
     const output = await replicateClient.runModel<
       typeof input,
       GingerbreadModelOutput
     >(GINGERBREAD_MODEL_ID, input);
+    
+    t2 = performance.now();
+    console.log(`[${id}] Replicate prediction finished. Took: ${(t2 - t1).toFixed(0)}ms`);
 
-    // Check output format (assuming it returns an array of URLs)
+    // Check output format
     if (!Array.isArray(output) || output.length === 0 || typeof output[0] !== 'string') {
-        console.error('Unexpected output format from Gingerbread model:', output);
+        console.error(`[${id}] Unexpected output format from Gingerbread model:`, output);
         throw new Error('Unexpected output format from Gingerbread model');
     }
     imageUrl = output[0];
+    console.log(`[${id}] Image URL received: ${imageUrl}`);
 
   } catch (error) {
-    console.error('Replicate API error:', error);
+    console.error(`[${id}] Replicate API error:`, error);
      va.track('Failed Gingerbread Generation', {
         prompt: reqBody.prompt,
         error: error instanceof Error ? error.message : String(error)
@@ -68,45 +75,62 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const endTime = performance.now();
-  const durationMS = endTime - startTime;
-
   try {
+    console.log(`[${id}] Fetching image blob...`);
+    t3 = performance.now();
     // Convert output to a blob object
-    const file = await fetch(imageUrl).then((res) => res.blob());
+    const file = await fetch(imageUrl).then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
+        return res.blob();
+    });
+    t4 = performance.now();
+    console.log(`[${id}] Image blob fetched. Size: ${file.size} bytes. Took: ${(t4 - t3).toFixed(0)}ms`);
 
+    console.log(`[${id}] Uploading to Vercel Blob...`);
+    t5 = performance.now();
     // Upload & store in Vercel Blob
-    const blobPath = `gingerbread/${id}.png`;
-    const { url: blobUrl } = await put(blobPath, file, { access: 'public' });
+    const blobPath = `gingerbread/${id}.png`; // Assuming png, adjust if needed
+    const { url: blobUrl } = await put(blobPath, file, { 
+        access: 'public',
+        contentType: file.type // Pass content type
+    });
+    t6 = performance.now();
+    console.log(`[${id}] Uploaded to Vercel Blob. URL: ${blobUrl}. Took: ${(t6 - t5).toFixed(0)}ms`);
 
+    console.log(`[${id}] Writing to Vercel KV...`);
+    const kvStartTime = performance.now();
     // Store metadata in Vercel KV
     await kv.hset(id, {
         type: 'gingerbread',
-        prompt: reqBody.prompt,
-        image: blobUrl, // Store the blob URL
-        model_latency: Math.round(durationMS),
+        prompt: reqBody.prompt, // Store original prompt without trigger word
+        image: blobUrl, 
+        model_latency: Math.round(t2 - t1), // Store Replicate latency
         model_id: GINGERBREAD_MODEL_ID
     });
+    const kvEndTime = performance.now();
+    console.log(`[${id}] Written to Vercel KV. Took: ${(kvEndTime - kvStartTime).toFixed(0)}ms`);
 
      va.track('Completed Gingerbread Generation', {
         prompt: reqBody.prompt,
-        latency: durationMS
+        latency: Math.round(t2 - t1)
     });
+
+    const overallEndTime = performance.now();
+    const overallDuration = overallEndTime - overallStartTime;
+    console.log(`[${id}] Request processed successfully. Total time: ${overallDuration.toFixed(0)}ms`);
 
     // Prepare response
     const response: GingerbreadGenerateResponse = {
       image_url: blobUrl, // Return the blob URL
-      model_latency_ms: Math.round(durationMS),
+      model_latency_ms: Math.round(t2 - t1), // Return Replicate model latency only
       id: id,
     };
-
     return NextResponse.json(response, { status: 200 });
 
-  } catch(error) { // Catch block for Blob/KV errors
-      console.error('Error saving result:', error);
-       va.track('Failed Gingerbread Saving', {
+  } catch(error) { // Catch block for Blob/KV/Fetch errors
+      console.error(`[${id}] Error during image processing/saving:`, error);
+       va.track('Failed Gingerbread Saving/Processing', {
         prompt: reqBody.prompt,
-        // Ensure error passed to va.track is always a string
         error: error instanceof Error ? error.message : String(error)
        });
        
@@ -115,14 +139,14 @@ export async function POST(request: NextRequest) {
             // Saving failed, but we have the original Replicate URL
             const fallbackResponse: GingerbreadGenerateResponse = {
               image_url: imageUrl,
-              model_latency_ms: Math.round(durationMS),
+              model_latency_ms: Math.round(t2 - t1), // Still use Replicate latency
               id: id, 
             };
-             console.warn('Saving failed, returning fallback response with Replicate URL.');
-             return NextResponse.json(fallbackResponse, { status: 200, headers: { 'X-Save-Warning': 'Failed to save image to storage'} });
+             console.warn(`[${id}] Processing/Saving failed, returning fallback response with Replicate URL.`);
+             return NextResponse.json(fallbackResponse, { status: 200, headers: { 'X-Save-Warning': 'Failed to process/save image'} });
        } else {
             // Saving failed AND imageUrl wasn't available (this case is less likely)
-            console.error('Saving failed and no Replicate URL available.');
+            console.error(`[${id}] Processing/Saving failed and no Replicate URL available.`);
             return NextResponse.json({ error: 'Failed to generate or save gingerbread image result' }, { status: 500 });
        }
   }
