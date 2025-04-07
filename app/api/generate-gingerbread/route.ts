@@ -7,7 +7,6 @@ import {
 import { kv } from '@vercel/kv';
 import { put } from '@vercel/blob';
 import { nanoid } from '@/utils/utils';
-import va from '@vercel/analytics';
 
 // Use the correct model ID and version from the example
 const GINGERBREAD_MODEL_ID = 'fofr/flux-gingerbread:503940bae1420b7b37ca91b8ff0f3a43974b48143225f2a6eeadd0d099f13e6f';
@@ -40,9 +39,9 @@ export async function POST(request: NextRequest) {
       // e.g., width: 512, height: 512
     };
 
-    va.track('Started Gingerbread Generation', {
+    /* va.track('Started Gingerbread Generation', {
         prompt: reqBody.prompt,
-    });
+    }); */
     console.log(`[${id}] Starting Replicate prediction...`);
     t1 = performance.now();
     
@@ -65,10 +64,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error(`[${id}] Replicate API error:`, error);
-     va.track('Failed Gingerbread Generation', {
+     /* va.track('Failed Gingerbread Generation', {
         prompt: reqBody.prompt,
         error: error instanceof Error ? error.message : String(error)
-    });
+    }); */
     return NextResponse.json(
       { error: 'Failed to generate gingerbread image' },
       { status: 500 },
@@ -110,10 +109,10 @@ export async function POST(request: NextRequest) {
     const kvEndTime = performance.now();
     console.log(`[${id}] Written to Vercel KV. Took: ${(kvEndTime - kvStartTime).toFixed(0)}ms`);
 
-     va.track('Completed Gingerbread Generation', {
+     /* va.track('Completed Gingerbread Generation', {
         prompt: reqBody.prompt,
         latency: Math.round(t2 - t1)
-    });
+    }); */
 
     const overallEndTime = performance.now();
     const overallDuration = overallEndTime - overallStartTime;
@@ -129,10 +128,10 @@ export async function POST(request: NextRequest) {
 
   } catch(error) { // Catch block for Blob/KV/Fetch errors
       console.error(`[${id}] Error during image processing/saving:`, error);
-       va.track('Failed Gingerbread Saving/Processing', {
+       /* va.track('Failed Gingerbread Saving/Processing', {
         prompt: reqBody.prompt,
         error: error instanceof Error ? error.message : String(error)
-       });
+       }); */
        
        // Explicitly handle fallback based on imageUrl availability
        if (imageUrl) {
