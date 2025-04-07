@@ -102,21 +102,28 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response, { status: 200 });
 
-  } catch(error) {
+  } catch(error) { // Catch block for Blob/KV errors
       console.error('Error saving result:', error);
        va.track('Failed Gingerbread Saving', {
         prompt: reqBody.prompt,
+        // Ensure error passed to va.track is always a string
         error: error instanceof Error ? error.message : String(error)
        });
-       // Even if saving fails, try to return the original Replicate URL if available
+       
+       // Explicitly handle fallback based on imageUrl availability
        if (imageUrl) {
+            // Saving failed, but we have the original Replicate URL
             const fallbackResponse: GingerbreadGenerateResponse = {
               image_url: imageUrl,
               model_latency_ms: Math.round(durationMS),
-              id: id, // ID might still be useful
+              id: id, 
             };
+             console.warn('Saving failed, returning fallback response with Replicate URL.');
              return NextResponse.json(fallbackResponse, { status: 200, headers: { 'X-Save-Warning': 'Failed to save image to storage'} });
+       } else {
+            // Saving failed AND imageUrl wasn't available (this case is less likely)
+            console.error('Saving failed and no Replicate URL available.');
+            return NextResponse.json({ error: 'Failed to generate or save gingerbread image result' }, { status: 500 });
        }
-       return NextResponse.json({ error: 'Failed to save gingerbread image result' }, { status: 500 });
   }
 } 

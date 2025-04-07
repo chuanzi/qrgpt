@@ -7,4 +7,4 @@ export type QrCodeControlNetRequest = {
   negative_prompt?: string;
 };
 
-export type QrCodeControlNetResponse = [string];
+export type QrCodeControlNetResponse = string[];
