@@ -111,6 +111,14 @@ const Navbar = () => {
                   QR Code
                 </Link>
               </li>
+              <li className="duration-150 hover:text-gray-900">
+                <Link
+                  href="/cyberpunk"
+                  className="block"
+                >
+                  Cyberpunk Typeface
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

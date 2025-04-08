@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useCallback, useEffect, useState } from 'react';
 import { QrGenerateRequest, QrGenerateResponse } from '@/utils/service';
 import { QrCard } from '@/components/QrCard';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import LoadingDots from '@/components/ui/loadingdots';
 import downloadQrCode from '@/utils/downloadQrCode';
@@ -26,13 +26,7 @@ import va from '@vercel/analytics';
 import { PromptSuggestion } from '@/components/PromptSuggestion';
 import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
-
-const promptSuggestions = [
-  'A city view with clouds',
-  'A beautiful glacier',
-  'A forest overlooking a mountain',
-  'A saharan desert',
-];
+import { generateQrPrompts } from '@/utils/promptGenerator';
 
 const generateFormSchema = z.object({
   url: z.string().min(1),
@@ -58,6 +52,8 @@ const Body = ({
   const [error, setError] = useState<Error | null>(null);
   const [response, setResponse] = useState<QrGenerateResponse | null>(null);
   const [submittedURL, setSubmittedURL] = useState<string | null>(null);
+  const [promptSuggestions, setPromptSuggestions] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const router = useRouter();
 
@@ -71,6 +67,19 @@ const Body = ({
       prompt: '',
     },
   });
+
+  const refreshPrompts = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      const newPrompts = generateQrPrompts(4);
+      setPromptSuggestions(newPrompts);
+      setIsRefreshing(false);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    refreshPrompts();
+  }, [refreshPrompts]);
 
   useEffect(() => {
     if (imageUrl && prompt && redirectUrl && modelLatency && id) {
@@ -123,7 +132,7 @@ const Body = ({
           prompt: values.prompt,
         });
 
-        router.push(`/start/${data.id}`);
+        router.push(`/qrcode/${data.id}`);
       } catch (error) {
         va.track('Failed to generate', {
           prompt: values.prompt,
@@ -184,7 +193,20 @@ const Body = ({
                   )}
                 />
                 <div className="my-2">
-                  <p className="text-sm font-medium mb-3">Prompt suggestions</p>
+                  <div className="flex justify-between items-center mb-3">
+                    <p className="text-sm font-medium">Prompt suggestions</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshPrompts}
+                      disabled={isRefreshing}
+                      className="h-8"
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      Refresh Suggestions
+                    </Button>
+                  </div>
+                  
                   <div className="grid sm:grid-cols-2 grid-cols-1 gap-3 text-center text-gray-500 text-sm">
                     {promptSuggestions.map((suggestion) => (
                       <PromptSuggestion
@@ -196,73 +218,51 @@ const Body = ({
                     ))}
                   </div>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="inline-flex justify-center
-                 max-w-[200px] mx-auto w-full"
-                >
-                  {isLoading ? (
-                    <LoadingDots color="white" />
-                  ) : response ? (
-                    '✨ Regenerate'
-                  ) : (
-                    'Generate'
-                  )}
-                </Button>
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error.message}</AlertDescription>
-                  </Alert>
-                )}
+                
+                <div className="mt-4">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full"
+                  >
+                    {isLoading ? (
+                      <LoadingDots color="white" />
+                    ) : (
+                      <span>Generate Image</span>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
         </div>
         <div className="col-span-1">
-          {submittedURL && (
+          <h1 className="text-3xl font-bold mb-10">Your QR Code Image</h1>
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
+          {response ? (
             <>
-              <h1 className="text-3xl font-bold sm:mb-5 mb-5 mt-5 sm:mt-0 sm:text-center text-left">
-                Your QR Code
-              </h1>
-              <div>
-                <div className="flex flex-col justify-center relative h-auto items-center">
-                  {response ? (
-                    <QrCard
-                      imageURL={response.image_url}
-                      time={(response.model_latency_ms / 1000).toFixed(2)}
-                    />
-                  ) : (
-                    <div className="relative flex flex-col justify-center items-center gap-y-2 w-[510px] border border-gray-300 rounded shadow group p-2 mx-auto animate-pulse bg-gray-400 aspect-square max-w-full" />
-                  )}
-                </div>
-                {response && (
-                  <div className="flex justify-center gap-5 mt-4">
-                    <Button
-                      onClick={() =>
-                        downloadQrCode(response.image_url, 'qrCode')
-                      }
-                    >
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          `https://qrgpt.io/start/${id || ''}`,
-                        );
-                        toast.success('Link copied to clipboard');
-                      }}
-                    >
-                      ✂️ Share
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <QrCard
+                imageURL={response.image_url}
+                time={
+                  modelLatency ? (modelLatency / 1000).toFixed(2) : '?'
+                }
+              />
+              <p className="pt-2 text-center text-xs italic">
+                Every QR code is unique. No one will have the same QR code as you.
+              </p>
             </>
+          ) : (
+            <div className="h-[530px] w-full rounded-2xl bg-white p-2 ring-2 ring-gray-200 flex items-center justify-center">
+              <p className="text-center text-gray-400 italic">
+                Your QR code will appear here, after generation.
+              </p>
+            </div>
           )}
         </div>
       </div>

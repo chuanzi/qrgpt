@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   GingerbreadGenerateRequest,
   GingerbreadGenerateResponse,
 } from '@/utils/service';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import LoadingDots from '@/components/ui/loadingdots';
 import downloadQrCode from '@/utils/downloadQrCode'; // Can be reused for downloading any image URL
@@ -28,19 +28,20 @@ import Image from 'next/image'; // Use Next.js Image component for optimization
 import { toast, Toaster } from 'react-hot-toast'; // For potential notifications
 import { PromptSuggestion } from '@/components/PromptSuggestion'; // Import PromptSuggestion
 import { Share2 } from 'lucide-react'; // Import Share icon
+import { generateGingerbreadPrompts } from '@/utils/promptGenerator';
 
 // Schema for the gingerbread generation form (with English messages)
 const gingerbreadFormSchema = z.object({
   prompt: z.string().min(3, { message: 'Prompt must be at least 3 characters' }).max(500, { message: 'Prompt cannot exceed 500 characters' }),
 });
 
-// Define Gingerbread specific suggestions (in English)
-const gingerbreadSuggestions = [
-    'A happy dancing gingerbread man',
-    'A cozy gingerbread house in the snow',
-    'A gingerbread baker wearing a chef hat',
-    'A gingerbread knight riding a candy cane'
-];
+// 删除静态提示列表，改用动态生成
+// const gingerbreadSuggestions = [
+//     'A happy dancing gingerbread man',
+//     'A cozy gingerbread house in the snow',
+//     'A gingerbread baker wearing a chef hat',
+//     'A gingerbread knight riding a candy cane'
+// ];
 
 type GingerbreadFormValues = z.infer<typeof gingerbreadFormSchema>;
 
@@ -65,13 +66,11 @@ const ImageCard = ({
       }
       const blob = await response.blob();
 
-      // Ensure the blob type is usable (browsers often prefer PNG for clipboard)
-      // We proceed assuming the type is okay, but this could be a point of failure.
-      if (!blob.type.startsWith('image/')) {
-         throw new Error(`Fetched data is not an image: ${blob.type}`);
-      }
+      // Recreate blob with correct type before creating ClipboardItem
+      const pngBlob = new Blob([blob], { type: 'image/png' });
 
-      const item = new ClipboardItem({ [blob.type]: blob });
+      // Force image/png type for ClipboardItem (now using pngBlob)
+      const item = new ClipboardItem({ 'image/png': pngBlob });
       await navigator.clipboard.write([item]);
 
       toast.success('Image copied! You can paste it now.', { id: toastId });
@@ -128,6 +127,10 @@ export const GingerbreadBody = () => {
   const [error, setError] = useState<Error | null>(null);
   const [response, setResponse] = useState<GingerbreadGenerateResponse | null>(null);
   const [submittedPrompt, setSubmittedPrompt] = useState<string | null>(null);
+  // 添加提示建议状态
+  const [gingerbreadSuggestions, setGingerbreadSuggestions] = useState<string[]>([]);
+  // 添加刷新状态
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const form = useForm<GingerbreadFormValues>({
     resolver: zodResolver(gingerbreadFormSchema),
@@ -136,6 +139,22 @@ export const GingerbreadBody = () => {
       prompt: '',
     },
   });
+
+  // 初始化和刷新提示函数
+  const refreshPrompts = useCallback(() => {
+    setIsRefreshing(true);
+    // 模拟网络延迟
+    setTimeout(() => {
+      const newPrompts = generateGingerbreadPrompts(4);
+      setGingerbreadSuggestions(newPrompts);
+      setIsRefreshing(false);
+    }, 300);
+  }, []);
+
+  // 页面加载时初始化提示
+  useEffect(() => {
+    refreshPrompts();
+  }, [refreshPrompts]);
 
   // Callback to handle suggestion clicks
   const handleSuggestionClick = useCallback(
@@ -202,11 +221,11 @@ export const GingerbreadBody = () => {
 
   return (
     <div className="flex justify-center items-center flex-col w-full lg:p-0 p-4 sm:mb-28 mb-0">
-        <Toaster position="top-center" reverseOrder={false}/>
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mt-10">
-        {/* Form Section (translated) */}
         <div className="col-span-1">
-          <h1 className="text-3xl font-bold mb-10">Create Your Gingerbread</h1>
+          <h1 className="text-3xl font-bold mb-10">
+            Generate a Gingerbread Image
+          </h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <div className="flex flex-col gap-4">
@@ -215,25 +234,35 @@ export const GingerbreadBody = () => {
                   name="prompt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image Prompt</FormLabel>
+                      <FormLabel>Prompt</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., A gingerbread man wearing a santa hat in the snow"
-                          className="resize-y min-h-[100px]"
+                          placeholder="A happy dancing gingerbread man"
+                          className="resize-none"
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription className="">
-                        Describe the image you want to generate.
+                      <FormDescription>
+                        Describe the gingerbread scene you want to generate.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Add Prompt Suggestions Section (translated) */}
-                 <div className="my-2">
-                  <p className="text-sm font-medium mb-3">Prompt Suggestions</p>
+                <div className="my-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <p className="text-sm font-medium">Prompt suggestions</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshPrompts}
+                      disabled={isRefreshing}
+                      className="h-8"
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      Refresh Suggestions
+                    </Button>
+                  </div>
                   <div className="grid sm:grid-cols-2 grid-cols-1 gap-3 text-center text-gray-500 text-sm">
                     {gingerbreadSuggestions.map((suggestion) => (
                       <PromptSuggestion
@@ -245,21 +274,21 @@ export const GingerbreadBody = () => {
                     ))}
                   </div>
                 </div>
-
+                
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex justify-center max-w-[200px] mx-auto w-full mt-4"
+                  className="mt-4"
                 >
                   {isLoading ? (
                     <LoadingDots color="white" />
                   ) : response ? (
-                     '✨ Regenerate'
+                    '✨ Regenerate'
                   ) : (
-                    'Generate Image'
+                    <span>Generate</span>
                   )}
                 </Button>
-
+                
                 {error && (
                   <Alert variant="destructive" className="mt-4">
                     <AlertCircle className="h-4 w-4" />
@@ -272,27 +301,27 @@ export const GingerbreadBody = () => {
           </Form>
         </div>
 
-        {/* Result Section (translated) */}
+        {/* Results Section */}
         <div className="col-span-1">
-          {(isLoading || response) && (
-             <h1 className="text-3xl font-bold sm:mb-5 mb-5 mt-5 sm:mt-0 text-center">
-                Your Gingerbread Work
-              </h1>
+          <h1 className="text-3xl font-bold mb-10">Your Gingerbread Image</h1>
+          
+          {response ? (
+            <ImageCard 
+              imageUrl={response.image_url} 
+              prompt={submittedPrompt || ''} 
+              time={(response.model_latency_ms / 1000).toFixed(2)}
+            />
+          ) : (
+            <div className="border border-gray-300 rounded shadow aspect-square w-full flex items-center justify-center bg-gray-50">
+              <p className="text-center text-gray-400 italic">
+                Your gingerbread image will appear here after generation.
+              </p>
+            </div>
           )}
-          <div className="flex flex-col justify-center relative h-auto items-center mt-4">
-            {isLoading && (
-                 <div className="relative flex flex-col justify-center items-center gap-y-2 w-full max-w-lg border border-gray-300 rounded shadow p-2 mx-auto animate-pulse bg-gray-400 aspect-square" />
-            )}
-            {response && !isLoading && (
-                <ImageCard
-                    imageUrl={response.image_url}
-                    prompt={submittedPrompt || 'gingerbread image'} // Display original prompt here
-                    time={(response.model_latency_ms / 1000).toFixed(2)}
-                 />
-            )}
-          </div>
         </div>
       </div>
+      
+      <Toaster position="top-center" />
     </div>
   );
 }; 

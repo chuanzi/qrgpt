@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   CyberpunkGenerateRequest,
   CyberpunkGenerateResponse,
 } from '@/utils/service';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import LoadingDots from '@/components/ui/loadingdots';
 import downloadQrCode from '@/utils/downloadQrCode';
@@ -28,20 +28,20 @@ import Image from 'next/image';
 import { toast, Toaster } from 'react-hot-toast';
 import { PromptSuggestion } from '@/components/PromptSuggestion';
 import { Share2 } from 'lucide-react';
+import { generateCyberpunkPrompts } from '@/utils/promptGenerator';
 
 // Simplified schema for the cyberpunk generation form
 const cyberpunkFormSchema = z.object({
   prompt: z.string().min(3, { message: 'Prompt must be at least 3 characters' }).max(500, { message: 'Prompt cannot exceed 500 characters' }),
-  // Removed optional fields: aspect_ratio, guidance_scale, extra_lora_scale
 });
 
-// Define Cyberpunk specific suggestions
-const cyberpunkSuggestions = [
-    '"Tokyo" in a Cyberpunk typeface on a rainy street',
-    '"Neon" in a Cyberpunk typeface with glitch effects',
-    '"Future" in a Cyberpunk typeface on a circuit board',
-    '"Digital" in a Cyberpunk typeface against a cityscape'
-];
+// 删除静态提示列表，改用动态生成
+// const cyberpunkSuggestions = [
+//     '"Tokyo" in a Cyberpunk typeface on a rainy street',
+//     '"Neon" in a Cyberpunk typeface with glitch effects',
+//     '"Future" in a Cyberpunk typeface on a circuit board',
+//     '"Digital" in a Cyberpunk typeface against a cityscape'
+// ];
 
 type CyberpunkFormValues = z.infer<typeof cyberpunkFormSchema>;
 
@@ -65,11 +65,10 @@ const ImageCard = ({
       }
       const blob = await response.blob();
 
-      if (!blob.type.startsWith('image/')) {
-         throw new Error(`Fetched data is not an image: ${blob.type}`);
-      }
-
-      const item = new ClipboardItem({ [blob.type]: blob });
+      // Recreate blob with correct type before creating ClipboardItem
+      const pngBlob = new Blob([blob], { type: 'image/png' });
+      
+      const item = new ClipboardItem({ 'image/png': pngBlob });
       await navigator.clipboard.write([item]);
 
       toast.success('Image copied! You can paste it now.', { id: toastId });
@@ -126,15 +125,34 @@ export const CyberpunkBody = () => {
   const [error, setError] = useState<Error | null>(null);
   const [response, setResponse] = useState<CyberpunkGenerateResponse | null>(null);
   const [submittedPrompt, setSubmittedPrompt] = useState<string | null>(null);
+  // 添加提示建议状态
+  const [cyberpunkSuggestions, setCyberpunkSuggestions] = useState<string[]>([]);
+  // 添加刷新状态
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const form = useForm<CyberpunkFormValues>({
     resolver: zodResolver(cyberpunkFormSchema),
     mode: 'onChange',
     defaultValues: {
       prompt: '',
-      // Removed defaults for optional fields
     },
   });
+
+  // 初始化和刷新提示函数
+  const refreshPrompts = useCallback(() => {
+    setIsRefreshing(true);
+    // 模拟网络延迟
+    setTimeout(() => {
+      const newPrompts = generateCyberpunkPrompts(4);
+      setCyberpunkSuggestions(newPrompts);
+      setIsRefreshing(false);
+    }, 300);
+  }, []);
+
+  // 页面加载时初始化提示
+  useEffect(() => {
+    refreshPrompts();
+  }, [refreshPrompts]);
 
   // Callback to handle suggestion clicks
   const handleSuggestionClick = useCallback(
@@ -202,41 +220,48 @@ export const CyberpunkBody = () => {
 
   return (
     <div className="flex justify-center items-center flex-col w-full lg:p-0 p-4 sm:mb-28 mb-0">
-        <Toaster position="top-center" reverseOrder={false}/>
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mt-10">
-        {/* Form Section */}
         <div className="col-span-1">
-          <h1 className="text-3xl font-bold mb-10">Create Cyberpunk Typeface</h1>
+          <h1 className="text-3xl font-bold mb-10">
+            Generate a Cyberpunk Typeface
+          </h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <div className="flex flex-col gap-4">
-                {/* Prompt Input */}
                 <FormField
                   control={form.control}
                   name="prompt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Text Prompt</FormLabel>
+                      <FormLabel>Prompt</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder='e.g., "Synthwave" in a glowing neon style'
-                          className="resize-y min-h-[100px]"
+                          placeholder='"Cyber" in a Cyberpunk typeface with glitch effects'
+                          className="resize-none"
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription className="">
-                        Enter the text you want to visualize in a cyberpunk style.
+                      <FormDescription>
+                        Describe the cyberpunk typeface image you want to generate.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Removed Aspect Ratio, Guidance Scale, Extra LoRA Scale fields */}
-
-                {/* Prompt Suggestions Section */}
-                 <div className="my-2">
-                  <p className="text-sm font-medium mb-3">Prompt Suggestions</p>
+                <div className="my-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <p className="text-sm font-medium">Prompt suggestions</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshPrompts}
+                      disabled={isRefreshing}
+                      className="h-8"
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      Refresh Suggestions
+                    </Button>
+                  </div>
                   <div className="grid sm:grid-cols-2 grid-cols-1 gap-3 text-center text-gray-500 text-sm">
                     {cyberpunkSuggestions.map((suggestion) => (
                       <PromptSuggestion
@@ -248,53 +273,54 @@ export const CyberpunkBody = () => {
                     ))}
                   </div>
                 </div>
-
+                
                 <Button
                   type="submit"
-                  className="w-full"
-                  disabled={isLoading || !form.formState.isValid}
-                  >
+                  disabled={isLoading}
+                  className="mt-4"
+                >
                   {isLoading ? (
-                    <LoadingDots color="#fff" />
+                    <LoadingDots color="white" />
+                  ) : response ? (
+                    '✨ Regenerate'
                   ) : (
-                    'Generate Cyberpunk Image'
+                    <span>Generate</span>
                   )}
                 </Button>
+                
+                {error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error.message}</AlertDescription>
+                  </Alert>
+                )}
               </div>
             </form>
           </Form>
         </div>
 
-        {/* Result Section */}
-        <div className="col-span-1 flex flex-col items-center justify-start">
-          <div className="w-full max-w-md mt-[7.5rem]">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Generation Error</AlertTitle>
-                <AlertDescription>{error.message}</AlertDescription>
-              </Alert>
-            )}
-            {!error && !isLoading && !response && (
-              <div className="border border-gray-300 rounded shadow p-4 flex justify-center items-center aspect-square">
-                <p className="text-gray-500">Your cyberpunk image will appear here.</p>
-              </div>
-            )}
-            {!error && isLoading && (
-              <div className="border border-gray-300 rounded shadow p-4 flex justify-center items-center aspect-square">
-                <LoadingDots />
-              </div>
-            )}
-            {response && !error && !isLoading && submittedPrompt && (
-              <ImageCard
-                imageUrl={response.image_url}
-                prompt={submittedPrompt}
-                time={(response.model_latency_ms / 1000).toFixed(2)}
-              />
-            )}
-           </div>
+        {/* Results Section */}
+        <div className="col-span-1">
+          <h1 className="text-3xl font-bold mb-10">Your Cyberpunk Image</h1>
+          
+          {response ? (
+            <ImageCard 
+              imageUrl={response.image_url} 
+              prompt={submittedPrompt || ''} 
+              time={(response.model_latency_ms / 1000).toFixed(2)}
+            />
+          ) : (
+            <div className="border border-gray-300 rounded shadow aspect-square w-full flex items-center justify-center bg-gray-50">
+              <p className="text-center text-gray-400 italic">
+                Your cyberpunk typeface image will appear here after generation.
+              </p>
+            </div>
+          )}
         </div>
       </div>
+      
+      <Toaster position="top-center" />
     </div>
   );
 }; 

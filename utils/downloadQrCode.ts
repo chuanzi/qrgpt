@@ -1,6 +1,6 @@
 function forceDownload(blobUrl: string, filename: string) {
   let a: any = document.createElement('a');
-  a.download = filename;
+  a.download = filename.endsWith('.png') ? filename : `${filename}.png`;
   a.href = blobUrl;
   document.body.appendChild(a);
   a.click();
@@ -16,8 +16,10 @@ export default function downloadQrCode(url: string, filename: string) {
   })
     .then((response) => response.blob())
     .then((blob) => {
-      let blobUrl = window.URL.createObjectURL(blob);
-      forceDownload(blobUrl, filename);
+      const pngBlob = blob.type === 'image/png' ? blob : new Blob([blob], { type: 'image/png' });
+      let blobUrl = window.URL.createObjectURL(pngBlob);
+      const finalFilename = filename.endsWith('.png') ? filename : `${filename}.png`;
+      forceDownload(blobUrl, finalFilename);
     })
     .catch((e) => console.error(e));
 }
