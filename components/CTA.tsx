@@ -14,7 +14,7 @@ const showcaseImages = [
 const CTA = () => (
   <SectionWrapper>
     <div className="custom-screen pt-0 pb-16">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
           <div className="text-indigo-600 mb-3">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.79 10.37a2.49 2.49 0 0 1-2.2 4.34 2.54 2.54 0 0 1-1.46-.73 3.41 3.41 0 0 0-4.26 0 2.54 2.54 0 0 1-1.46.73 2.49 2.49 0 0 1-2.2-4.34 2.48 2.48 0 0 1 1.39-1.55 2.5 2.5 0 0 1 3.82 1.1 3.52 3.52 0 0 0 4.48 0 2.5 2.5 0 0 1 3.82-1.1 2.48 2.48 0 0 1 1.39 1.55Z"/><path d="M12 15.56a1.5 1.5 0 1 0-3 0"/><path d="M15 15.56a1.5 1.5 0 1 0 3 0"/></svg>
@@ -43,6 +43,21 @@ const CTA = () => (
             className="inline-block font-medium text-sm text-white bg-teal-600 hover:bg-teal-500 active:bg-teal-700 py-2 px-4 rounded-lg duration-150"
           >
             Try QR Code
+          </NavLink>
+        </div>
+        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+          <div className="text-pink-600 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Cyberpunk Typeface</h3>
+          <p className="text-gray-600 mb-4">
+            Generate text in a stunning cyberpunk visual style.
+          </p>
+          <NavLink
+            href="/cyberpunk"
+            className="inline-block font-medium text-sm text-white bg-pink-600 hover:bg-pink-500 active:bg-pink-700 py-2 px-4 rounded-lg duration-150"
+          >
+            Try Cyberpunk
           </NavLink>
         </div>
       </div>

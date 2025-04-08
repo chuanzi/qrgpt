@@ -49,3 +49,17 @@ export interface GingerbreadGenerateResponse {
   model_latency_ms: number;
   id: string;
 }
+
+// Add types for Cyberpunk Typeface generation
+export interface CyberpunkGenerateRequest {
+  prompt: string;
+  aspect_ratio?: string; // e.g., "3:2", "1:1", "2:3"
+  guidance_scale?: number;
+  extra_lora_scale?: number;
+}
+
+export interface CyberpunkGenerateResponse {
+  image_url: string;
+  model_latency_ms: number;
+  id: string;
+}
