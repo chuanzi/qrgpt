@@ -21,11 +21,9 @@ import { QrCard } from '@/components/QrCard';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import LoadingDots from '@/components/ui/loadingdots';
-import downloadQrCode from '@/utils/downloadQrCode';
 import va from '@vercel/analytics';
 import { PromptSuggestion } from '@/components/PromptSuggestion';
 import { useRouter } from 'next/navigation';
-import { toast, Toaster } from 'react-hot-toast';
 import { generateQrPrompts } from '@/utils/promptGenerator';
 
 const generateFormSchema = z.object({
@@ -51,7 +49,6 @@ const Body = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [response, setResponse] = useState<QrGenerateResponse | null>(null);
-  const [submittedURL, setSubmittedURL] = useState<string | null>(null);
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -88,7 +85,6 @@ const Body = ({
         model_latency_ms: modelLatency,
         id: id,
       });
-      setSubmittedURL(redirectUrl);
 
       form.setValue('prompt', prompt);
       form.setValue('url', redirectUrl);
@@ -106,7 +102,6 @@ const Body = ({
     async (values: GenerateFormValues) => {
       setIsLoading(true);
       setResponse(null);
-      setSubmittedURL(values.url);
 
       try {
         const request: QrGenerateRequest = {
@@ -266,7 +261,6 @@ const Body = ({
           )}
         </div>
       </div>
-      <Toaster />
     </div>
   );
 };

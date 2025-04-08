@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/react';
 import PlausibleProvider from 'next-plausible';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -48,9 +49,17 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <PlausibleProvider domain="artspark.space" />
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-EN73MPNPQC"></script>
-        <script
+      </head>
+      <body className={inter.className}>
+        <Navbar />
+        {/* Google Analytics using next/script */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-EN73MPNPQC`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -60,9 +69,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={inter.className}>
-        <Navbar />
         <main>{children}</main>
         <Analytics />
         <Footer />
